@@ -24,7 +24,7 @@ for i, row in ukrainian_dataframe.iterrows():
     if len(row['comments_corrected']) > 0:
         pass
     else:
-        row['comments'].replace(to_replace=i, value=[i for i in row['comments_corrected']], inplace=False, limit=None,
+        row['comments'].replace(to_replace=[i for i in row['comments']], value=[i for i in row['comments_corrected']], inplace=False, limit=None,
                                 regex=False, method='pad')
 
-print(ukrainian_dataframe['comments'].head())
+    print(ukrainian_dataframe['comments'].head())
