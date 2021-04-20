@@ -65,9 +65,9 @@ def get_comments_text(url):
             profile_url = profile.find('a').get('href')
             profile_url_array.append(profile_url)
             profile_url_array = list(dict.fromkeys(profile_url_array))
-            for url in profile_url_array:
-                names = get_name(url)
-                readers = get_readers(url)
+            for profile_url in profile_url_array:
+                names = get_name(profile_url)
+                readers = get_readers(profile_url)
                 comment_text_array.append({'comment': com, 'date': date, 'author_name': names, 'readers': readers})
     except:
         comment_text_array = []
@@ -87,9 +87,8 @@ def get_name(url):
     comment_author_name_array = []
     author_profile = content.find('div', attrs='wrap')
     author_profile_main = author_profile.find('div', attrs='profile_main')
-    name = author_profile_main.find('div', attrs='name').get('data-user_id')
-    comment_author_name_array.append(name)
-    return comment_author_name_array
+    name = author_profile_main.find('div', attrs='name').find('a').get_text() #('data-user_id')
+    return name
 
 def get_readers(url):
     response = requests.get(url, timeout=5)
@@ -97,9 +96,8 @@ def get_readers(url):
     comment_author_readers_array = []
     author_profile = content.find('div', attrs='wrap')
     author_profile_main = author_profile.find('div', attrs='profile_main')
-    readers = author_profile_main.find_all('div', attrs='fval').find('span').get_text()
-    comment_author_readers_array.append(readers)
-    return comment_author_readers_array
+    readers = author_profile_main.find('div', attrs='fval').find('a').get_text( )
+    return readers
 
 
 if __name__ == '__main__':
