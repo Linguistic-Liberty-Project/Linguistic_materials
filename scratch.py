@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 import requests
-import os
 import pandas as pd
 
 def main():
@@ -87,7 +86,7 @@ def get_name(url):
     comment_author_name_array = []
     author_profile = content.find('div', attrs='wrap')
     author_profile_main = author_profile.find('div', attrs='profile_main')
-    name = author_profile_main.find('div', attrs='name').find('a').get_text() #('data-user_id')
+    name = author_profile_main.find('div', attrs='name').find('a').get_text()
     return name
 
 def get_readers(url):
@@ -96,7 +95,16 @@ def get_readers(url):
     comment_author_readers_array = []
     author_profile = content.find('div', attrs='wrap')
     author_profile_main = author_profile.find('div', attrs='profile_main')
-    readers = author_profile_main.find('div', attrs='fval').find('a').get_text( )
+    readers = author_profile_main.find_all('div', attrs='fval')
+    for 'div' in readers:
+        contents = str('div')
+        if 'Меня читают' in contents:
+            reading_me = author_profile_main.find_all('div', attrs='fval').find('a').get_text( )
+        elif 'Я читаю' in contents:
+            i_am_reading = author_profile_main.find_all('div', attrs='fval').find('a').get_text( )
+            comment_author_readers_array.append({'reading_me': reading_me, 'i_am_reading': i_am_reading})
+        print(comment_author_readers_array)
+        #.find('a').get_text( )
     return readers
 
 
