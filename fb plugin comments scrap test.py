@@ -66,7 +66,6 @@ def main():
             print("Cannot find news_section")
             continue
     url_array = set(url_array)
-    print(url_array)
     try:
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             futures = []
@@ -75,7 +74,7 @@ def main():
                 for future in concurrent.futures.as_completed(futures):
                     #   time.sleep(5)
                     print(future.result())
-    except ConnectionError and ConnectionRefusedError:
+    except:
         pass
         # for url_content in url_array:
         # scrape_text(url_content)
@@ -83,36 +82,41 @@ def main():
     # df2 = pd.read_csv('comments_new.csv', sep=',')
 
 
-def get_comments_text(url):
-    response = requests.get(url = 'https://zn.ua/international/bolshaja-katastrofa-amerikano-turetskikh-otnoshenij.html', timeout=30)
+def request_comment(url):
+    response = requests.get(url , timeout=30)
     content = BeautifulSoup(response.content, "html.parser")
-    article = content.find('div', attrs="comment_block_art").find('div', attrs="comments_list").find('ul',
+    try:
+        article = content.find('div', attrs="comment_block_art").find('div', attrs="comments_list").find('ul',
                                                                                                      attrs="main_comments_list")[
         'data-absnum']
-    myobj = {'article': article, 'page': 1, 'typeload': 1, 'comtype': 1}
-    x = requests.post(url='https://zn.ua/actions/comments/', data=myobj, headers={"Content-Type": "application/json"})
-    try:
+        myobj = {'article': article, 'page': 1, 'typeload': 1, 'comtype': 1}
+        x = requests.post(url='https://zn.ua/actions/comments/', data=myobj, headers={"Content-Type": "application/json"})
         json_file = x.json()
-        if json_file['comments']['success']:
-            to_parse = json_file['comments']['results']['html']
-            content = BeautifulSoup(to_parse, "html.parser")
-            comment_array = []
-            parsed_comment = content.find('li', attrs='comment_item')
-            try:
-                for comment in parsed_comment:
-                    comment_text = comment.find('span', attrs='comment_text_block').find('span',
+    except AttributeError and ValueError:
+        return None
+    if json_file['comments']['success']:
+        return json_file
+    else:
+        print('No comments found here')
+
+
+def get_comments_text(url):
+    file = request_comment(url)
+    to_parse = file['comments']['results']['html']
+    content = BeautifulSoup(to_parse, "html.parser")
+    comment_array = []
+    parsed_comment = content.find('li', attrs='comment_item')
+    try:
+        for comment in parsed_comment:
+            comment_text = comment.find('span', attrs='comment_text_block').find('span',
                                                                                              attrs='comment_txt').get_text()
-                    parsed_name = comment.find_all('span', attrs='user_info_block').find('span',
+            parsed_name = comment.find_all('span', attrs='user_info_block').find('span',
                                                                                          attrs='user_nickname').get_text()
-                    parsed_date = comment.find_all('span', attrs='user_info_block').find('span',
+            parsed_date = comment.find_all('span', attrs='user_info_block').find('span',
                                                                                          attrs='comment_time').get_text()
-                    obj = {'comment': comment_text, 'date': parsed_date, 'author_name': parsed_name}
-                    comment_array.append(dict(obj))
-            except AttributeError:
-                comment_array = []
-        else:
-            return [], None
-    except:
+            obj = {'comment': comment_text, 'date': parsed_date, 'author_name': parsed_name}
+            comment_array.append(dict(obj))
+    except AttributeError:
         comment_array = []
     return comment_array, None
 
