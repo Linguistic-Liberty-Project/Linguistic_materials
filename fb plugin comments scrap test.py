@@ -1,21 +1,11 @@
 import concurrent.futures
-import json
 
-from bs4 import BeautifulSoup
-import requests
 import pandas as pd
-import time
-import socket
-from concurrent.futures import ThreadPoolExecutor, wait, as_completed
-from time import sleep
-from random import randint
+import requests
+from bs4 import BeautifulSoup
 
 topic_urls = []
 i = 1
-
-# s1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# s1.bind(('0.0.0.0', 80))
-# s1.listen(5)
 
 theme_url_vaccination = 'https://zn.ua/theme/14786/'
 theme_url_curfew = 'https://zn.ua/theme/74/'
@@ -44,15 +34,16 @@ def construct_topics_urls():
 
 
 def main():
-    topic_urls = construct_topics_urls()
-    print("Topic URLs amount {}".format(len(topic_urls)))
+    topic_urls_main = construct_topics_urls()
+    print("Topic URLs amount {}".format(len(topic_urls_main)))
     url_array = []
-    for url in topic_urls:
+    for url in topic_urls_main:
         response = requests.get(url, timeout=60)
         content = BeautifulSoup(response.content, "html.parser")
-        main_div = content.find('div', attrs='sbody').find('div', id="container").find('div', id='holder').find('div',
-                                                                                                                id='left')
-        news_sections = None
+        main_div = content.find('div', attrs='sbody')\
+            .find('div', id="container")\
+            .find('div', id='holder')\
+            .find('div', id='left')
         try:
             news_sections = main_div.find('div', attrs="left_news_list section").find('ul', attrs='news_list').find_all(
                 'li')
@@ -73,51 +64,60 @@ def main():
                 futures.append(executor.submit(scrape_text, url=future_url))
                 for future in concurrent.futures.as_completed(futures):
                     #   time.sleep(5)
-                    print(future.result())
-    except:
-        pass
-        # for url_content in url_array:
-        # scrape_text(url_content)
-
-    # df2 = pd.read_csv('comments_new.csv', sep=',')
+                    if future.result():
+                        print(future.result())
+    except Exception as e:
+        print(e)
 
 
-def request_comment(url):
-    response = requests.get(url , timeout=30)
+def request_comment_data(url, page=1):
+    response = requests.get(url, timeout=30)
     content = BeautifulSoup(response.content, "html.parser")
     try:
-        article = content.find('div', attrs="comment_block_art").find('div', attrs="comments_list").find('ul',
-                                                                                                     attrs="main_comments_list")[
-        'data-absnum']
-        myobj = {'article': article, 'page': 1, 'typeload': 1, 'comtype': 1}
-        x = requests.post(url='https://zn.ua/actions/comments/', data=myobj, headers={"Content-Type": "application/json"})
-        json_file = x.json()
+        article = content.find('div', attrs="comment_block_art")\
+                        .find('div', attrs="comments_list")\
+                        .find('ul', attrs="main_comments_list")['data-absnum']
+        try:
+            x = requests.post(url='https://zn.ua/actions/comments/',
+                              data={'article': article, 'page': page, 'typeload': 4, 'comtype': 1}).json()
+        except:
+            myobj = {'article': article, 'page': 1, 'typeload': 1, 'comtype': 1}
+            x = requests.post(url='https://zn.ua/actions/comments/', data=myobj).json()
+        json_file = x
     except AttributeError and ValueError:
         return None
     if json_file['comments']['success']:
         return json_file
     else:
         print('No comments found here')
+        return None
 
 
 def get_comments_text(url):
-    file = request_comment(url)
-    to_parse = file['comments']['results']['html']
-    content = BeautifulSoup(to_parse, "html.parser")
+    file = request_comment_data(url)
+    if file is None:
+        return [], None
+    pages_count = file['comments']['result']['pages']
     comment_array = []
-    parsed_comment = content.find('li', attrs='comment_item')
-    try:
-        for comment in parsed_comment:
-            comment_text = comment.find('span', attrs='comment_text_block').find('span',
-                                                                                             attrs='comment_txt').get_text()
-            parsed_name = comment.find_all('span', attrs='user_info_block').find('span',
-                                                                                         attrs='user_nickname').get_text()
-            parsed_date = comment.find_all('span', attrs='user_info_block').find('span',
-                                                                                         attrs='comment_time').get_text()
-            obj = {'comment': comment_text, 'date': parsed_date, 'author_name': parsed_name}
-            comment_array.append(dict(obj))
-    except AttributeError:
-        comment_array = []
+    page_counter = 1
+    while page_counter <= pages_count:
+        to_parse = file['comments']['result']['html']
+        content = BeautifulSoup(to_parse, "html.parser")
+        parsed_comment = content.find_all('li', attrs='comment_item')
+        try:
+            for comment in parsed_comment:
+                comment_text = comment.find('span', attrs='comment_text_block').find('span',
+                                                                                     attrs='comment_txt').get_text()
+                parsed_name = comment.find('span', attrs='user_info_block').find('span',
+                                                                                 attrs='user_nickname').get_text()
+                parsed_date = comment.find('span', attrs='user_info_block').find('span',
+                                                                                 attrs='comment_time').get_text()
+                obj = {'comment': comment_text, 'date': parsed_date, 'author_name': parsed_name}
+                comment_array.append(dict(obj))
+        except AttributeError:
+            comment_array = []
+        page_counter += 1
+        file = request_comment_data(url, page_counter)
     return comment_array, None
 
 
@@ -135,7 +135,10 @@ def scrape_text(url):
                      'name': item.get('author_name')})
     df1 = df1.append(rows, ignore_index=True)
     df1 = df1.drop_duplicates()
-    filename = "/Users/lidiiamelnyk/Documents/comments_folder/" + str(hash(init_url)) + '.csv'
+    count = df1['comment'].count()
+    if count <= 0:
+        return
+    filename = "./comments_zn_ua/" + str(hash(init_url)) + '.csv'
     with open(filename, 'w+', encoding='utf-8-sig',
               newline='') as file:
         df1.to_csv(file, sep=',', na_rep='', float_format=None,
@@ -146,7 +149,6 @@ def scrape_text(url):
                    date_format=None, doublequote=True, escapechar=None, decimal='.')
         print("Finished writing to {}".format(filename))
         file.close()
-    count = df1['comment'].count()
     return "Comments count {}".format(count)
 
 
