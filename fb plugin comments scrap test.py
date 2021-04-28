@@ -52,13 +52,13 @@ def main():
                 url_news = 'https://zn.ua' + url_new
                 url_array.append(url_news)
                 url_array = list(dict.fromkeys(url_array))
-                # print("URL array length {}".format(len(url_array)))
+                print("URL array length {}".format(len(url_array)))
         except AttributeError:
             print("Cannot find news_section")
             continue
     url_array = set(url_array)
     try:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=500) as executor:
             futures = []
             for future_url in url_array:
                 futures.append(executor.submit(scrape_text, url=future_url))

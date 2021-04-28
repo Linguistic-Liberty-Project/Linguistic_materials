@@ -54,8 +54,20 @@ print(confusion_matrix(y_test, y_pred))
 print(classification_report(y_test, y_pred))
 
 
-dataframe1 = pd.read_csv("/Users/lidiiamelnyk/Downloads/comments_new_test_23_100.csv", sep=',', encoding='utf-8-sig',
+import glob
+
+path = '/Users/lidiiamelnyk/Documents/comments_folder/' # use your path
+all_files = glob.glob(path + "/*.csv")
+
+li = []
+
+for filename in all_files:
+    df = pd.read_csv(filename, index_col=None, sep = ',', header=0,  encoding='utf-8-sig',
                          float_precision='round_trip')
+    li.append(df)
+
+dataframe1 = pd.concat(li, axis=0, ignore_index=True)
+
 
 
 spec_chars = ['"',"#","%","&","'","(",")",
@@ -63,14 +75,14 @@ spec_chars = ['"',"#","%","&","'","(",")",
               "=",">","?","@","[","\\","]","^","_",
               "`","{","|","}","~","–", '$']
 for char in spec_chars:
-    dataframe1['comments'] = dataframe1['comments'].str.replace(char, ' ')
+    dataframe1['comment'] = dataframe1['comment'].str.replace(char, ' ')
 
-print (dataframe1['comments'].head())
+print (dataframe1['comment'].head())
 
 for i, row in dataframe1.iterrows():
     language = []
-    dataframe1['comments'] = dataframe1['comments'].astype(str)
-    for line in row['comments'].split(" "):
+    dataframe1['comment'] = dataframe1['comment'].astype(str)
+    for line in row['comment'].split(" "):
         line = [line]
         language_pred = pipeline.predict(line)
         language.append(str(language_pred))
@@ -93,15 +105,15 @@ for i, row in dataframe1.iterrows():
     elif percentage_ru > 0.70:
         dataframe1.at[i, 'predicted_language'] = "Russian"
     else:
-        dataframe1.at[i, 'predicted_language'] = "Surzhyk"
-
-dataframe1 = dataframe1.reindex(columns = ['url', 'comments','date','predicted_language'])
-
-with open('/Users/lidiiamelnyk/Downloads/comments_test_23_100_with_language_70_pr.csv', 'w+', newline = '', encoding='utf-8-sig') as file:
+        dataframe1.at[i, 'predicted_language'] = "Ukrainian"
+import datetime
+dataframe1 = dataframe1.reindex(columns = ['url', 'comment','date','name','readers','predicted_language'])
+dataframe1.drop_duplicates()
+with open('/Users/lidiiamelnyk/Documents/comments_censor_net.csv', 'w+', newline = '', encoding='utf-8-sig') as file:
     dataframe1.to_csv(file, sep=',', na_rep='', float_format=None,
-               columns=['url', 'comments', 'date', 'predicted_language'],
+               columns=['url', 'comment', 'date', 'name','readers','predicted_language'],
                header=True, index=False, index_label=None,
                mode='a', compression='infer',
                quoting=None, quotechar='"', line_terminator=None, chunksize=None,
-               date_format=None, doublequote=True, escapechar=None, decimal='.', errors='strict')
+               date_format=str, doublequote=True, escapechar=None, decimal='.', errors='strict')
     file.close()

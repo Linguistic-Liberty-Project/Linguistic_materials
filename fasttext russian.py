@@ -22,7 +22,7 @@ def save_data(path, data):
 
 
 def train():
-    traning_parameters = {'input': 'fasttext_rus.train', 'epoch': 50000, 'lr': 0.85, 'wordNgrams': 1, 'verbose': 2,
+    traning_parameters = {'input': 'fasttext.train', 'epoch': 50000, 'lr': 0.85, 'wordNgrams': 1, 'verbose': 2,
                           'minCount': 1, 'loss': "ns",
                           'lrUpdateRate': 100, 'thread': 1, 'ws': 5, 'dim': 100}
     model = fasttext.train_supervised(**traning_parameters)
@@ -50,7 +50,7 @@ def transform(input_file,  output_file):
 
 
 if __name__ == "__main__":
-    transform('/Users/lidiiamelnyk/Documents/ukrainian_comments.csv',"fasttext.train")
+    transform('/Users/lidiiamelnyk/Documents/russian_comments.csv',"fasttext_rus.train")
     #transform("data/germeval2018.test.txt", "fasttext.test")
 
     # train the model
