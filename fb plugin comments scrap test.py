@@ -138,7 +138,7 @@ def scrape_text(url):
     count = df1['comment'].count()
     if count <= 0:
         return
-    filename = "./comments_zn_ua/" + str(hash(init_url)) + '.csv'
+    filename = "/Users/lidiiamelnyk/Documents/comments_zn_ua/" + str(hash(init_url)) + '.csv'
     with open(filename, 'w+', encoding='utf-8-sig',
               newline='') as file:
         df1.to_csv(file, sep=',', na_rep='', float_format=None,
