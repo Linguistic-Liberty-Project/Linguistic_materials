@@ -22,7 +22,7 @@ def save_data(path, data):
 
 
 def train():
-    traning_parameters = {'input': 'fasttext_rus.train', 'epoch': 50000, 'lr': 0.85, 'wordNgrams': 1, 'verbose': 2,
+    traning_parameters = {'input': 'fasttext.train', 'epoch': 50000, 'lr': 0.85, 'wordNgrams': 1, 'verbose': 2,
                           'minCount': 1, 'loss': "ns",
                           'lrUpdateRate': 100, 'thread': 1, 'ws': 5, 'dim': 100}
     model = fasttext.train_supervised(**traning_parameters)
@@ -46,7 +46,33 @@ def transform(input_file,  output_file):
     # transform it into fasttext format __label__other have a nice day
     data = [f"__label__{line[1].rstrip()}\t{line[0]}" for line in data]
     # and save the data
+def train():
+    traning_parameters = {'input': 'fasttext.train', 'epoch': 50000, 'lr': 0.85, 'wordNgrams': 1, 'verbose': 2,
+                          'minCount': 1, 'loss': "ns",
+                          'lrUpdateRate': 100, 'thread': 1, 'ws': 5, 'dim': 100}
+    model = fasttext.train_supervised(**traning_parameters)
+    model.save_model("model1.bin")
+    return model
+
+
+def test(model):
+    f1_score = lambda precision, recall: 2 * ((precision * recall) / (precision + recall))
+    nexamples, recall, precision = model.test('fasttext.test')
+    print(f'recall: {recall}')
+    print(f'precision: {precision}')
+    print(f'f1 score: {f1_score(precision, recall)}')
+    print(f'number of examples: {nexamples}')
+
+
+
+def transform(input_file,  output_file):
+    # load data
+    data = load_data(input_file)
+    # transform it into fasttext format __label__other have a nice day
+    data = [f"__label__{line[1].rstrip()}\t{line[0]}" for line in data]
+    # and save the data
     save_data(output_file, data)
+
 
 
 if __name__ == "__main__":
