@@ -1,7 +1,8 @@
 import pandas as pd
 import stanza
 stanza.download('uk')
-file = pd.read_csv('/Users/lidiiamelnyk/Documents/hatespeech_zn_ua.csv')
+file = pd.read_csv('/Users/lidiiamelnyk/Documents/hatespeech_zn_ua.csv', index_col=None, sep = ',', header=0,  encoding='utf-8-sig',
+                         float_precision='round_trip')
 comments_row = file['comment']
 
 config = {
@@ -16,13 +17,18 @@ config = {
 
 nlp = stanza.Pipeline('uk', processors='tokenize', tokenize_no_ssplit = True)
 
-for i, row in file.iterrows():
+for iter, row in file.iterrows():
 	tokenized_sents = []
-	for i in row['comment'].split(' '):
+	file['comment'] = file['comment'].astype(str)
+	if isinstance(row['comment'],float):
+		continue
+	for i in row['comment'].split(" "):
 		doc = nlp(row['comment'])
 		sentenciz = doc.sentences[0].tokens
 		for t in sentenciz:
-			tokens = {x['text']: x for x in sentenciz}
-			tokenized_sents.append(tokens)
-	file.at[i,'tokenized'] = ' '.join(tokenized_sents)
+			for j in t.words:
+				tokenized_sents.append(j.text)
+	file.at[iter,'tokenized'] = ' '.join(tokenized_sents)
+
+print(file.head())
 
