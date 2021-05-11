@@ -16,7 +16,7 @@ config = {
 	'tokenize_pretokenized': True # Use pretokenized text as input and disable tokenization
 }
 
-nlp = stanza.Pipeline('uk', processors='tokenize', tokenize_no_ssplit = True)
+nlp = stanza.Pipeline('uk', processors='tokenize, pos', tokenize_no_ssplit = True)
 
 for iter, row in file.iterrows():
 	tokenized_sents = []
@@ -29,9 +29,26 @@ for iter, row in file.iterrows():
 	for t in sentenciz:
 		tokenized_sents.append(t.text)
 		file.at[iter, 'tokenized'] = tokenized_sents
+#pos - t.words[0].pos
+sentences = file['tokenized']
 
+sentences = sentences.dropna(axis=0, how='any', thresh=None, subset=None, inplace=True)
+sentences = sentences.map(lambda x: re.sub('[,\.!?]', '', x))  # remove punctuation
+sentences = sentences.map(lambda x: x.lower())
 
-print(file['tokenized'].head())
+myfile = open('/Users/lidiiamelnyk/Documents/stop_words_ua.txt', "r", encoding = 'utf-8-sig')
+content = myfile.read()
+stopwords_list = content.split(",")
+
+sentences = sentences(lambda x: x for x in sentences if x not in stopwords_list)
+
+with open('/Users/lidiiamelnyk/Documents/tokenized_dataframe.csv', 'w+', encoding='utf-8-sig', newline='') as file:
+	sentences.to_csv(file, sep=',', na_rep='', float_format=None,
+			   header=True, index=False, index_label=None,
+			   mode='a', compression='infer',
+			   quoting=None, quotechar='"', line_terminator=None, chunksize=None,
+			   date_format=None, doublequote=True, escapechar=None, decimal='.')
+
 
 
 
