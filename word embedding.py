@@ -1,5 +1,6 @@
 import pandas as pd
 import stanza
+import re
 stanza.download('uk')
 file = pd.read_csv('/Users/lidiiamelnyk/Documents/hatespeech_zn_ua.csv', index_col=None, sep = ',', header=0,  encoding='utf-8-sig',
                          float_precision='round_trip')
@@ -22,13 +23,16 @@ for iter, row in file.iterrows():
 	file['comment'] = file['comment'].astype(str)
 	if isinstance(row['comment'],float):
 		continue
-	for i in row['comment'].split(" "):
-		doc = nlp(row['comment'])
-		sentenciz = doc.sentences[0].tokens
-		for t in sentenciz:
-			for j in t.words:
-				tokenized_sents.append(j.text)
-	file.at[iter,'tokenized'] = ' '.join(tokenized_sents)
+	#for i in row['comment'].split(" "):
+	doc = nlp(row['comment'])
+	sentenciz = doc.sentences[0].tokens
+	for t in sentenciz:
+		tokenized_sents.append(t.text)
+		file.at[iter, 'tokenized'] = tokenized_sents
 
-print(file.head())
+
+print(file['tokenized'].head())
+
+
+
 
