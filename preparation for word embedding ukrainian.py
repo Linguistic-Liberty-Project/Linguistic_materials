@@ -16,10 +16,11 @@ config = {
 	'tokenize_pretokenized': True # Use pretokenized text as input and disable tokenization
 }
 
-nlp = stanza.Pipeline('uk', processors='tokenize, pos', tokenize_no_ssplit = True)
+nlp = stanza.Pipeline('uk', processors='tokenize, pos, lemma', tokenize_no_ssplit = True)
 
 for iter, row in file.iterrows():
 	tokenized_sents = []
+	lemmatized_sents = []
 	file['comment'] = file['comment'].astype(str)
 	if isinstance(row['comment'],float):
 		continue
@@ -28,19 +29,23 @@ for iter, row in file.iterrows():
 	sentenciz = doc.sentences[0].tokens
 	for t in sentenciz:
 		tokenized_sents.append(t.text)
+		lemmas = t.words[0].lemma.lower()
+		for lemma in lemmas:
+			if len(lemma)>3:
+				lemmatized_sents.append(lemma)
+				print(lemmatized_sents)
 		file.at[iter, 'tokenized'] = tokenized_sents
+		file.at[iter, 'lemmatized'] =  lemmatized_sents
 #pos - t.words[0].pos
 sentences = file['tokenized']
 
-sentences = sentences.dropna(axis=0, how='any', thresh=None, subset=None, inplace=True)
-sentences = sentences.map(lambda x: re.sub('[,\.!?]', '', x))  # remove punctuation
-sentences = sentences.map(lambda x: x.lower())
+sentences = sentences.dropna()
 
 myfile = open('/Users/lidiiamelnyk/Documents/stop_words_ua.txt', "r", encoding = 'utf-8-sig')
 content = myfile.read()
 stopwords_list = content.split(",")
 
-sentences = sentences(lambda x: x for x in sentences if x not in stopwords_list)
+#sentences = sentences(lambda x: x for x in sentences if x not in stopwords_list)
 
 with open('/Users/lidiiamelnyk/Documents/tokenized_dataframe.csv', 'w+', encoding='utf-8-sig', newline='') as file:
 	sentences.to_csv(file, sep=',', na_rep='', float_format=None,
