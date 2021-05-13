@@ -29,11 +29,15 @@ for iter, row in file.iterrows():
 	sentenciz = doc.sentences[0].tokens
 	for t in sentenciz:
 		tokenized_sents.append(t.text)
-		lemmas = t.words[0].lemma.lower()
-		for lemma in lemmas:
-			if len(lemma)>3:
-				lemmatized_sents.append(lemma)
-				print(lemmatized_sents)
+		pos_tags = t.words[0].pos
+		allowed_tags = ['VERB', 'NOUN', 'PROPN', 'ADJ', 'DET', 'ADV']
+		for tag in pos_tags.split(' '):
+			if tag in allowed_tags:
+				lemmas = t.words[0].lemma.lower()
+				for lemma in lemmas.split(' '):
+					if len(lemma)>3:
+						lemmatized_sents.append(lemma)
+						print(lemmatized_sents)
 		file.at[iter, 'tokenized'] = tokenized_sents
 		file.at[iter, 'lemmatized'] =  lemmatized_sents
 #pos - t.words[0].pos
