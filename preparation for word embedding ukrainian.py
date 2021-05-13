@@ -34,23 +34,17 @@ for iter, row in file.iterrows():
 		allowed_tags = ['VERB', 'NOUN', 'PROPN', 'ADJ', 'DET', 'ADV'] #create the list of tags I want to sort by
 		for tag in pos_tags.split(' '):
 			if tag in allowed_tags:
-				lemmatized_sents.append(t.words[0].lemma.lower())
+				lemmas = t.words[0].lemma.lower()
+				for lemma in lemmas.split(' '):
+					if lemma not in stopwords_list:
+						lemmatized_sents.append(lemma)
 		file.at[iter, 'lemmatized'] =  lemmatized_sents
 
-
-
-for i, row in file.iterrows():
-	stop_words_free_lemmas = []
-	for word in row['lemmatized']:
-		if word not in stopwords_list:
-			stop_words_free_lemmas.append(word)
-	file.at[i, 'stop_words_free_lemmas'] = stop_words_free_lemmas
-
-new_columns = ['comment', 'date', 'model_result', 'stop_words_free_lemmas']
+new_columns = ['comment', 'date', 'model_result', 'lemmatized']
 
 file = file.reindex(columns = new_columns)
-with open('/Users/lidiiamelnyk/Documents/tokenized_dataframe.csv', 'w+', encoding='utf-8-sig', newline='') as file:
-	file.to_csv(file, sep=',', na_rep='', float_format=None, columns = new_columns,
+with open('/Users/lidiiamelnyk/Documents/lemmatized_dataframe.csv', 'w+', encoding='utf-8-sig', newline='') as my_file:
+	file.to_csv(my_file, sep=',', na_rep='', float_format=None, columns = new_columns,
 			   header=True, index=False, index_label=None,
 			   mode='a', compression='infer',
 			   quoting=None, quotechar='"', line_terminator=None, chunksize=None,
