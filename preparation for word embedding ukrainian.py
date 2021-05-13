@@ -17,6 +17,10 @@ config = {
 }
 
 nlp = stanza.Pipeline('uk', processors='tokenize, pos, lemma', tokenize_no_ssplit = True)
+myfile = open('/Users/lidiiamelnyk/Documents/stop_words_ua.txt', "r", encoding = 'utf-8-sig')
+content = myfile.read()
+stopwords_list = content.split("\n")
+
 
 for iter, row in file.iterrows():
 	tokenized_sents = []
@@ -28,31 +32,34 @@ for iter, row in file.iterrows():
 	doc = nlp(row['comment'])
 	sentenciz = doc.sentences[0].tokens
 	for t in sentenciz:
-		tokenized_sents.append(t.text)
+		#tokenized_sents.append(t.text)
 		pos_tags = t.words[0].pos
 		allowed_tags = ['VERB', 'NOUN', 'PROPN', 'ADJ', 'DET', 'ADV']
 		for tag in pos_tags.split(' '):
 			if tag in allowed_tags:
-				lemmas = t.words[0].lemma.lower()
-				for lemma in lemmas.split(' '):
-					if len(lemma)>3:
-						lemmatized_sents.append(lemma)
-						print(lemmatized_sents)
-		file.at[iter, 'tokenized'] = tokenized_sents
+				#lemmas = t.words[0].lemma.lower()
+				#for lemma in lemmas.split(' '):
+					#if len(lemma)>3:
+				lemmatized_sents.append(t.words[0].lemma.lower())
+		#file.at[iter, 'tokenized'] = tokenized_sents
 		file.at[iter, 'lemmatized'] =  lemmatized_sents
 #pos - t.words[0].pos
-sentences = file['tokenized']
 
-sentences = sentences.dropna()
 
-myfile = open('/Users/lidiiamelnyk/Documents/stop_words_ua.txt', "r", encoding = 'utf-8-sig')
-content = myfile.read()
-stopwords_list = content.split(",")
+
+for i, row in file.iterrows():
+	stop_words_free_lemmas = []
+	for word in row['lemmatized']:
+		if word in stopwords_list:
+			pass
+		else:
+			stop_words_free_lemmas.append(word)
+	file.at[i, 'stop_word_free_lemmas'] = stop_words_free_lemmas
 
 #sentences = sentences(lambda x: x for x in sentences if x not in stopwords_list)
 
 with open('/Users/lidiiamelnyk/Documents/tokenized_dataframe.csv', 'w+', encoding='utf-8-sig', newline='') as file:
-	sentences.to_csv(file, sep=',', na_rep='', float_format=None,
+	file.to_csv(file, sep=',', na_rep='', float_format=None,
 			   header=True, index=False, index_label=None,
 			   mode='a', compression='infer',
 			   quoting=None, quotechar='"', line_terminator=None, chunksize=None,
