@@ -16,50 +16,41 @@ config = {
 	'tokenize_pretokenized': True # Use pretokenized text as input and disable tokenization
 }
 
-nlp = stanza.Pipeline('uk', processors='tokenize, pos, lemma', tokenize_no_ssplit = True)
-myfile = open('/Users/lidiiamelnyk/Documents/stop_words_ua.txt', "r", encoding = 'utf-8-sig')
+nlp = stanza.Pipeline('uk', processors='tokenize, pos, lemma', tokenize_no_ssplit = True) #create nlp pipeline
+myfile = open('/Users/lidiiamelnyk/Documents/stop_words_ua.txt', "r", encoding = 'utf-8-sig') #upload the stopwords
 content = myfile.read()
-stopwords_list = content.split("\n")
+stopwords_list = content.split("\n") #since stopwords come in a form of a list, split them based on the newline
 
 
 for iter, row in file.iterrows():
-	tokenized_sents = []
-	lemmatized_sents = []
-	file['comment'] = file['comment'].astype(str)
-	if isinstance(row['comment'],float):
+	lemmatized_sents = [] #create the list, I am going to append lemmas into
+	file['comment'] = file['comment'].astype(str) #change type of data to str as it is required to process the file in the nlp pipeline
+	if isinstance(row['comment'],float): #handling the failure where it is for some reason always tpe float
 		continue
-	#for i in row['comment'].split(" "):
-	doc = nlp(row['comment'])
-	sentenciz = doc.sentences[0].tokens
+	doc = nlp(row['comment']) #create the doc file from the nlp pipeline
+	sentenciz = doc.sentences[0].tokens #get tokens
 	for t in sentenciz:
-		#tokenized_sents.append(t.text)
-		pos_tags = t.words[0].pos
-		allowed_tags = ['VERB', 'NOUN', 'PROPN', 'ADJ', 'DET', 'ADV']
+		pos_tags = t.words[0].pos #for each token get the part of speech tag
+		allowed_tags = ['VERB', 'NOUN', 'PROPN', 'ADJ', 'DET', 'ADV'] #create the list of tags I want to sort by
 		for tag in pos_tags.split(' '):
 			if tag in allowed_tags:
-				#lemmas = t.words[0].lemma.lower()
-				#for lemma in lemmas.split(' '):
-					#if len(lemma)>3:
 				lemmatized_sents.append(t.words[0].lemma.lower())
-		#file.at[iter, 'tokenized'] = tokenized_sents
 		file.at[iter, 'lemmatized'] =  lemmatized_sents
-#pos - t.words[0].pos
 
 
 
 for i, row in file.iterrows():
 	stop_words_free_lemmas = []
 	for word in row['lemmatized']:
-		if word in stopwords_list:
-			pass
-		else:
+		if word not in stopwords_list:
 			stop_words_free_lemmas.append(word)
-	file.at[i, 'stop_word_free_lemmas'] = stop_words_free_lemmas
+	file.at[i, 'stop_words_free_lemmas'] = stop_words_free_lemmas
 
-#sentences = sentences(lambda x: x for x in sentences if x not in stopwords_list)
+new_columns = ['comment', 'date', 'model_result', 'stop_words_free_lemmas']
 
+file = file.reindex(columns = new_columns)
 with open('/Users/lidiiamelnyk/Documents/tokenized_dataframe.csv', 'w+', encoding='utf-8-sig', newline='') as file:
-	file.to_csv(file, sep=',', na_rep='', float_format=None,
+	file.to_csv(file, sep=',', na_rep='', float_format=None, columns = new_columns,
 			   header=True, index=False, index_label=None,
 			   mode='a', compression='infer',
 			   quoting=None, quotechar='"', line_terminator=None, chunksize=None,
