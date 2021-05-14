@@ -8,7 +8,8 @@ import itertools
 from time import time  # To time our operations
 from collections import defaultdict  # For word frequency
 import multiprocessing
-
+from sklearn.cluster import KMeans
+from sklearn.neighbors import KDTree
 import logging  # Setting up the loggings to monitor gensim
 logging.basicConfig(format="%(levelname)s - %(asctime)s: %(message)s", datefmt= '%H:%M:%S', level=logging.INFO)
 
@@ -66,4 +67,19 @@ w2v_model.train(sentences, total_examples=w2v_model.corpus_count, epochs=50, rep
 
 print('Time to train the model: {} mins'.format(round((time() - t) / 60, 2)))
 
-print(w2v_model.wv.most_similar(positive=["вакцина"]))
+from sklearn.manifold import TSNE
+import matplotlib
+from matplotlib import pyplot as plt
+words = w2v_model.wv.index_to_key
+wvs = w2v_model.wv[words]
+
+tsne = TSNE(n_components=2, random_state=0, n_iter=5000, perplexity=2)
+np.set_printoptions(suppress=True)
+T = tsne.fit_transform(wvs)
+labels = words
+
+plt.figure(figsize=(12, 6))
+plt.scatter(T[:, 0], T[:, 5], c='orange', edgecolors='r')
+for label, x, y in zip(labels, T[:, 1], T[:, 1]):
+    plt.annotate(label, xy=(x+1, y+1), xytext=(0, 0), textcoords='offset points')
+plt.show()
